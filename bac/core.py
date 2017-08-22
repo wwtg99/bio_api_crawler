@@ -1,5 +1,6 @@
 import logging
 import json
+import bac.utils
 
 
 class Engine:
@@ -12,6 +13,8 @@ class Engine:
         self._crawlers = {}
         self._crawler = None
         self._pipelines = []
+        self._version = 'v0.1'
+        self._descr = 'Bioinfomatics API crawler'
 
     def init_crawler(self, argparser):
         """
@@ -19,10 +22,17 @@ class Engine:
         :param argparser:
         :return:
         """
+        # add arguments
+        argparser.add_argument('action', help="Crawler action", choices=['help', 'version', 'list', 'crawl'])
+        argparser.add_argument('-V', '--verbose', help="Print more information", action="store_true")
+        argparser.add_argument('-c', '--crawler', help="Crawler name")
+        argparser.add_argument('--logger', help="Change log output")
+        argparser.add_argument('--logfile', help="Change log file path")
+        argparser.add_argument('--loglevel', help="Change log level")
         # init crawlers
         crawlers = self._config.CRAWLERS
         for category, p in crawlers.items():
-            pkg, cls = self.retrieve_class(p)
+            pkg, cls = bac.utils.split_class(p)
             pr = __import__(pkg, fromlist=True)
             par = getattr(pr, cls)(category)
             self._crawlers[category] = par
@@ -30,32 +40,40 @@ class Engine:
         # init pipelines
         pipelines = self._config.PIPELINES
         for p in pipelines:
-            pkg, cls = self.retrieve_class(p)
+            pkg, cls = bac.utils.split_class(p)
             pr = __import__(pkg, fromlist=True)
             par = getattr(pr, cls)()
             par.add_arguments(argparser)
             self._pipelines.append(par)
 
-    def retrieve_class(self, name):
-        """
-        Get packages and class name.
-        :param name:
-        :return: package, class
-        """
-        dot = name.rfind('.')
-        if dot != -1:
-            pkg = name[:dot]
-            cls = name[(dot + 1):]
-            return pkg, cls
-        return '', name
-
-    def parse_options(self, args):
+    def parse_arguments(self, args):
         """
         Parse command line options.
         :param args:
         :return:
         """
         self._options = args
+        action = args.action.lower()
+        if action == 'help':
+            print(self.show_help())
+        elif action == 'version':
+            print(self._version + ' ' + self._descr)
+        elif action == 'list':
+            for c in self.list_crawlers():
+                print(c)
+        elif action == 'crawl':
+            crw = args.crawler
+            if crw is None:
+                print('No crawler provided by --crawler')
+            else:
+                self.start(crw)
+
+    def show_help(self):
+        h = 'List available actions. See more info please use --help\n' \
+            'version\tShow version\n' \
+            'list\tList available crawlers\n' \
+            'crawl\tStart crawl by a defined crawler\n'
+        return h
 
     def init_logger(self):
         """
@@ -74,9 +92,10 @@ class Engine:
         loglevel = self.get_option('loglevel')
         if loglevel:
             self._config.LOG_LEVEL = loglevel
-        logfile = self.get_option('log_file')
+        logfile = self.get_option('logfile')
         if logfile:
             self._config.LOG_FILE = logfile
+            self._config.LOG_TYPE = 'file'
         if self._config.LOG_LEVEL.lower() in level:
             lv = level[self._config.LOG_LEVEL.lower()]
         else:
@@ -130,7 +149,10 @@ class Engine:
         :return:
         """
         for p in self._pipelines:
-            p.process_item(item, crawler, self)
+            item = p.process_item(item, crawler, self)
+            if item is None:
+                break
+        return item
 
     def close_crawler(self):
         """
@@ -174,6 +196,13 @@ class Engine:
             return self._crawlers[category]
         else:
             return None
+
+    def list_crawlers(self):
+        """
+        Get available crawlers.
+        :return: list
+        """
+        return self._crawlers.keys()
 
 
 class BaseItem:
@@ -251,12 +280,12 @@ class BasePipeline:
 
     def process_item(self, item, crawler, engine):
         """
-        Process each item.
+        Process each item, return BastItem or None to stop.
 
         :param item:
         :param crawler:
         :param engine:
-        :return:
+        :return: BaseItem or None
         """
         pass
 

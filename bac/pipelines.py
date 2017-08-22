@@ -1,8 +1,21 @@
 from bac.core import BasePipeline
 
 
-class JsonLinePipeline(BasePipeline):
+class ConsolePipeline(BasePipeline):
+    """
+    Print item to console.
+    """
 
+    def process_item(self, item, crawler, engine):
+        super().process_item(item, crawler, engine)
+        print(item)
+        return item
+
+
+class JsonLinePipeline(BasePipeline):
+    """
+    Output item to json file.
+    """
     def process_item(self, item, crawler, engine):
         super().process_item(item, crawler, engine)
         output = engine.get_option('output')
@@ -10,6 +23,7 @@ class JsonLinePipeline(BasePipeline):
             output = engine.get_config('STORAGE_OUTPUT')
         with open(output, 'a') as fp:
             fp.write(str(item) + '\n')
+        return item
 
     def add_arguments(self, argparser):
         super().add_arguments(argparser)
@@ -17,7 +31,9 @@ class JsonLinePipeline(BasePipeline):
 
 
 class MongodbPipeline(BasePipeline):
-
+    """
+    Store item in mongodb.
+    """
     def add_arguments(self, argparser):
         super().add_arguments(argparser)
         argparser.add_argument('--mongo-host', help="MongoDB host")
@@ -45,6 +61,7 @@ class MongodbPipeline(BasePipeline):
     def process_item(self, item, crawler, engine):
         super().process_item(item, crawler, engine)
         self.get_collection().replace_one({'_id': item['_id']}, dict(item), True)
+        return item
 
     def get_collection(self):
         """

@@ -1,5 +1,6 @@
 from bac.crawlers import AsyncApiCrawler
 from bac.core import BaseItem
+from bac.core import CrawlerException
 import json
 import time
 
@@ -16,6 +17,7 @@ class EnsembleVariationCrawler(AsyncApiCrawler):
         super().add_arguments(argparser)
         argparser.add_argument('--snp-ids', help="SNP id list, comma delimiter [" + self.category + ']')
         argparser.add_argument('--snp-file', help="File for SNP id list [" + self.category + ']')
+        argparser.add_argument('--batch-num', help="SNP number for each batch (1 ~ 1000) [" + self.category + ']', type=int)
         argparser.add_argument('--genotypes', help="Include individual genotypes [" + self.category + ']',
                                action='store_true')
         argparser.add_argument('--phenotypes', help="Include phenotypes [" + self.category + ']', action='store_true')
@@ -23,6 +25,12 @@ class EnsembleVariationCrawler(AsyncApiCrawler):
                                action='store_true')
         argparser.add_argument('--population-genotypes', help="Include population genotype frequencies [" + self.category + ']',
                                action='store_true')
+
+    def open(self, engine):
+        super().open(engine)
+        n = engine.get_option('batch_num')
+        if n:
+            self.max_batch_num = n
 
     def parse_request(self, engine):
         params = {}
@@ -40,6 +48,8 @@ class EnsembleVariationCrawler(AsyncApiCrawler):
         elif engine.get_option('snp_file'):
             for snps in self.load_snp_file(engine.get_option('snp_file')):
                 yield {'data': json.dumps({'ids': snps}), 'params': params, 'headers': self.headers}
+        else:
+            raise CrawlerException('Neither snp-ids nor snp-file provided')
 
     def parse(self, response, engine):
         super().parse(response, engine)

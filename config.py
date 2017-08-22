@@ -6,14 +6,16 @@ LOG_LEVEL = 'DEBUG'
 
 # crawlers
 CRAWLERS = {
-    'variation': 'crawlers.ensemble_crawlers.EnsembleVariationCrawler'
+    'variation': 'crawlers.ensemble_crawlers.EnsembleVariationCrawler',
+    'dbsnp': 'crawlers.entrez_crawlers.EntrezSNPCrawler'
 }
 
 # pipelines
 # execute by order
 PIPELINES = [
-    # 'bac.pipelines.JsonLinePipeline'  # store items in json line file
-    'bac.pipelines.MongodbPipeline'  # store items in mongodb
+    'bac.pipelines.ConsolePipeline',  # print items to console
+    # 'bac.pipelines.JsonLinePipeline',  # store items in json line file
+    # 'bac.pipelines.MongodbPipeline'  # store items in mongodb
 ]
 
 # pipelines config
