@@ -22,7 +22,7 @@ python crawler.py -h
 ```
 
 # Configuration
-All config store in the config.py.
+All config store in the config.py. Some configuration can be changed in command line.
 
 ### CRAWLERS: define crawlers
 User can add custom crawler by extending AsyncApiCrawler(most time) or BaseCrawler.

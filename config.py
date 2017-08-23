@@ -4,6 +4,11 @@ LOG_TYPE = 'console'
 LOG_FILE = 'parser_error.log'  # log file path if LOG_TYPE is file
 LOG_LEVEL = 'DEBUG'
 
+# Wait for seconds after some requests
+SPEED_LIMIT = False
+LIMIT_NUM = 10
+SLEEP_SECOND = 5
+
 # crawlers
 CRAWLERS = {
     'variation': 'crawlers.ensemble_crawlers.EnsembleVariationCrawler',
@@ -13,9 +18,9 @@ CRAWLERS = {
 # pipelines
 # execute by order
 PIPELINES = [
-    'bac.pipelines.ConsolePipeline',  # print items to console
+    # 'bac.pipelines.ConsolePipeline',  # print items to console
     # 'bac.pipelines.JsonLinePipeline',  # store items in json line file
-    # 'bac.pipelines.MongodbPipeline'  # store items in mongodb
+    'bac.pipelines.MongodbPipeline'  # store items in mongodb
 ]
 
 # pipelines config

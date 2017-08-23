@@ -6,11 +6,10 @@ import time
 
 
 class EntrezSNPCrawler(AsyncApiCrawler):
+
     def __init__(self, category):
         super().__init__(category)
         self.url = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi'
-        self._sleep = 3
-        self._sleep_num = 80
 
     def parse(self, response, engine):
         super().parse(response, engine)
@@ -53,15 +52,10 @@ class EntrezSNPCrawler(AsyncApiCrawler):
         :return:
         """
         with open(fpath) as fp:
-            num = 0
             for l in fp:
                 l = l.strip()
                 if l:
                     if l.startswith('rs'):
                         l = l[2:]
                     yield l
-                    num += 1
-                    if num >= self._sleep_num:
-                        time.sleep(self._sleep)
-                        num = 0
         return

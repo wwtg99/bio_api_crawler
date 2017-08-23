@@ -1,6 +1,7 @@
 import logging
 import json
 import bac.utils
+import time
 
 
 class Engine:
@@ -15,6 +16,7 @@ class Engine:
         self._pipelines = []
         self._version = 'v0.1'
         self._descr = 'Bioinfomatics API crawler'
+        self._start = time.time()
 
     def init_crawler(self, argparser):
         """
@@ -29,6 +31,9 @@ class Engine:
         argparser.add_argument('--logger', help="Change log output")
         argparser.add_argument('--logfile', help="Change log file path")
         argparser.add_argument('--loglevel', help="Change log level")
+        argparser.add_argument('--speed-limit', help="Whether sleep after process some data, default false", action="store_true")
+        argparser.add_argument('--limit-num', help="Sleep after how many requests", type=int)
+        argparser.add_argument('--sleep-sec', help="Sleep seconds", type=int)
         # init crawlers
         crawlers = self._config.CRAWLERS
         for category, p in crawlers.items():
@@ -111,6 +116,8 @@ class Engine:
         self.open_crawler(category)
         self.crawl(category)
         self.close_crawler()
+        runtime = time.time() - self._start
+        logging.info('Finish! Run time %s ' % str(runtime))
 
     def open_crawler(self, category=None):
         """
